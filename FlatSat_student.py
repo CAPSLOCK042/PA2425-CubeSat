@@ -79,6 +79,11 @@ def take_photo():
             #PUSH PHOTO TO GITHUB
         
         #PAUSE
+        picam2 = Picamera2()
+        picam2.start()
+        time.sleep(1)
+        picam2.capture_file(img_gen("test"))
+        git_push()
 
 
 def main():
