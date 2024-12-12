@@ -71,7 +71,7 @@ def take_photo():
     """
     while True:
         accelx, accely, accelz = accel_gyro.acceleration
-
+        
         #CHECKS IF READINGS ARE ABOVE THRESHOLD
             #PAUSE
             #name = ""     #First Name, Last Initial  ex. MasonM
