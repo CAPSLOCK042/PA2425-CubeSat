@@ -20,9 +20,11 @@ from adafruit_lsm6ds.lsm6dsox import LSM6DSOX as LSM6DS
 from adafruit_lis3mdl import LIS3MDL
 from git import Repo
 from picamera2 import Picamera2
+from gpiozero import Button
 
+button=Button(21)
 #VARIABLES
-THRESHOLD = 0      #Any desired value from the accelerometer
+THRESHOLD = 10      #Any desired value from the accelerometer
 REPO_PATH = "/home/paCubeSat/PA2425-CubeSat"     #Your github repo path: ex. /home/pi/FlatSatChallenge
 FOLDER_PATH = "images"   #Your image folder path in your GitHub repo: ex. /Images
 
@@ -43,7 +45,7 @@ def git_push():
         print('added remote')
         origin.pull()
         print('pulled changes')
-        repo.git.add(REPO_PATH + FOLDER_PATH)
+        repo.git.add(REPO_PATH +'/' + FOLDER_PATH)
         repo.index.commit('New Photo')
         print('made the commit')
         origin.push()
@@ -70,19 +72,22 @@ def take_photo():
     Replace psuedocode with your own code.
     """
     while True:
-        accelx, accely, accelz = accel_gyro.acceleration
-        print(accelx, accely, accelz )
-        #CHECKS IF READINGS ARE ABOVE THRESHOLD
-            #PAUSE
-            #name = ""     #First Name, Last Initial  ex. MasonM
-            #TAKE PHOTO
-            #PUSH PHOTO TO GITHUB
+            
+        if True:
+            button.wait_for_press()
+            print("taking in .1")
         
-        #PAUSE
-        picam2.start()
-        time.sleep(5)
-        picam2.capture_file(img_gen("test"))
-        git_push()
+            #CHECKS IF READINGS ARE ABOVE THRESHOLD
+                #PAUSE
+                #name = ""     #First Name, Last Initial  ex. MasonM
+                #TAKE PHOTO
+                #PUSH PHOTO TO GITHUB
+            
+            #PAUSE
+            picam2.start()
+            time.sleep(.1)
+            picam2.capture_file(img_gen("buttontest"))
+            git_push()
 
 
 def main():
