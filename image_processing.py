@@ -1,15 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Oct  1 11:46:23 2024
+Spyder Editor
 
-@author: russe
-"""
-
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Jun  1 22:03:59 2024
-
-@author: russe
+This is a temporary script file.
 """
 import numpy as np
 import cv2
@@ -21,10 +14,11 @@ from skimage.morphology import convex_hull_image
 from skimage.feature import corner_harris, corner_peaks
 from skimage.transform import warp, AffineTransform, resize
 
-if True:
+
+def main(image_path=r"C:\Users\russe\Downloads\testcube.png", dimensions=(3, 4)):
     # def main(image_path="easySudoku.png"):
-    image_path = "easySudoku.png"
-    image_path=r"C:\Users\russe\Pictures\Camera Roll\WIN_20250103_18_15_16_Pro.jpg"
+
+    dimensions=(3,4)
 
     def show_image(image, title="Image", cmap_type='gray'):
         plt.imshow(image, cmap=cmap_type)
@@ -33,6 +27,7 @@ if True:
         plt.show()
 
     def show_image_with_corners(image, coords, title="Corners detected"):
+        coords = np.array(coords)
         plt.imshow(image, interpolation='nearest', cmap='gray')
         plt.title(title)
         plt.plot(coords[:, 1], coords[:, 0], '+r', markersize=15)
@@ -54,10 +49,53 @@ if True:
         #Order should be most l-u, r-u, l-d
         a=np.array([t(raw_coords[i]) for i in range(len(raw_coords))])
         return [raw_coords[np.argmin(a[:,i])] for i in range (4)]
+    def good_fix_coords(raw_coords, center, chull):
+        
+        coords=sorted(raw_coords, key=lambda a: ((center[0]-a[0])**2+(center[0]-a[1])**2)**.5)[-4:]
+        s=lambda a: a if a>0 else a+2*np.pi
+        p=lambda p: s(np.arctan2(p[1] - center[1], p[0] - center[0])-1*np.pi/4)
+        #order is in terms of dgrees from positive x axis
+        coords=sorted(coords, key=p)
+        return sorted(coords, key=p)
+        
+        
+    #updated one
+    #make it so that is must take in dimesnsion as
+    def points5matrix(coords:np.array, dimensions:tuple, centroid, img_dim): 
+        #note coords are in the form of (y,x)
+        #y axis is also switched
+     
+        y=coords[1]-coords[2]
+        x=coords[3]-coords[2]
+        y[0]*=1
+        x[0]*=1
+        m=np.zeros((4,4))
+        b=np.zeros((4,1))
+        b[0]=dimensions[1]
+        b[3]=dimensions[0]
+        m[0,0:2]=x
+        m[1,2:4]=x
+        m[2,0:2]=y
+        m[3,2:4]=y
+        matrix=np.linalg.solve(m,b)
+        x1=matrix.reshape(2,2)
+        x1=x1/np.power(abs(np.linalg.det(x1)), .5)
+        centroid[0]=centroid[0]
+        new_cent=np.matmul(x1, centroid)
+        ans=np.zeros((3,3))
+        ans[2,2]=1
+        ans[:2,:2]=x1
+        a=new_cent-np.array(img_dim)//2
+        print(y,x)
+        print(np.matmul(x1,y),np.matmul(x1,x))
+        print(centroid, new_cent, a)
+        ans[0,2]= img_dim[0]//2-new_cent[0]
+        ans[1,2]= img_dim[1]//2-new_cent[1]
+        print(ans)
+        return ans
+        
     
-    def points5matrix(coords): 
-        pass
-    
+
     def points4matrix(coords):
         minx = np.where(coords[:, 1] == min(coords[:, 1]))[0][-1]
         if minx == np.where(coords[:, 0] == max(coords[:, 0]))[0][0]:
@@ -106,16 +144,16 @@ if True:
             a[2, 2] = 1
             print(a)
             return a
-    image = cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
+    image = 255 - cv2.cvtColor(cv2.imread(image_path), cv2.COLOR_BGR2RGB)
     image_gray  = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
-    show_image(image_gray , "og")
+    show_image(image , "og")
     clahe = cv2.createCLAHE(clipLimit=40.0, tileGridSize=(8,8))
     cl1=clahe.apply(image_gray)
     image_gaussian = gaussian(image_gray)
     thresh = threshold_otsu(image_gaussian)
     binary = image_gaussian > thresh
-    show_image(binary, "thresholded")
-    input()
+    binary=1-binary
+    # show_image(binary, "thresholded")
 
     """
     raw_coords = corner_peaks(corner_harris(binary), min_distance=2, threshold_rel=0.02)
@@ -123,33 +161,51 @@ if True:
     """
 
     chull = convex_hull_image(binary)
-    show_image(chull, "shape")
-
+    # show_image(chull, "shape")
+    if not chull.all():
+        print('oof')
+        chull=binary
+    
     raw_coords = corner_peaks(corner_harris(
-        chull), min_distance=2, threshold_rel=0.02)
+        chull), min_distance=20, threshold_rel=0.02)
     # show_image(chull)
-    show_image_with_corners(chull, raw_coords)
+    # show_image_with_corners(chull, raw_coords)
+    indices = np.argwhere(chull == 1)
 
-    coords = np.array(fix_coords(raw_coords))
-
-
-    tForm1 = AffineTransform(points4matrix(coords))
-    image2 = warp(binary, tForm1.inverse)
+    # Compute the centroid
+    centroid = np.mean(indices, axis=0)
+    coords = good_fix_coords(raw_coords, centroid, chull)
+    # show_image_with_corners(chull, coords)
+    
+    img_dim=chull.shape
+    matrix=points5matrix(coords, dimensions, centroid, img_dim)
+    tForm1 = AffineTransform(matrix)
+    color_warp = warp(image, tForm1.inverse)
+    image2 = warp(chull, tForm1.inverse)
     show_image(image2, "warped back?")
+    
+    # Check if image2 contains non-zero points before computing the convex hull
+    thresh1 = threshold_otsu(image2)
+    binary2= image2 > thresh1
+    chull1 = convex_hull_image(binary2)
+    if not chull1.all():
+        print('oof')
+        chull1 = binary2
+    
 
-    chull1 = convex_hull_image(image2)
+
     raw_coords1 = corner_peaks(corner_harris(
-        chull1), min_distance=2, threshold_rel=0.02)
-    coords1 = fix_coords(raw_coords1)
-    image2 = warp(binary, tForm1.inverse)
-    filtered_image = image2[int(coords1[0][0]):int(
-        coords1[2][0]), int(coords1[0][1]):int(coords1[1][1])]
-    b = len(filtered_image)+9-len(filtered_image) % 9
-    ready_image = resize(filtered_image, (b, b))
-    show_image(ready_image)
-    color_ready_image = color.gray2rgb(ready_image).astype(np.float64)
+        chull1), min_distance=20, threshold_rel=0.02)
+    show_image(chull1, "chull1")
+    indices1 = np.argwhere(chull1 == 1)
+    centroid1 = np.mean(indices1, axis=0)
+    coords1 = good_fix_coords(raw_coords1, centroid1, chull1)
+    filtered_image = image2[int(coords1[1][0]):int(
+        coords1[3][0]), int(coords1[1][1]):int(coords1[3][1])]
+    color_ready_image=color_warp[int(coords1[1][0]):int(
+        coords1[3][0]), int(coords1[1][1]):int(coords1[3][1])]
     show_image(color_ready_image, "ready image")
     # return ready_image
 
-    # return color_ready_image
-# main()
+    return color_ready_image
+main()
