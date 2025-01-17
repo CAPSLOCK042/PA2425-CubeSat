@@ -15,7 +15,11 @@ from skimage.feature import corner_harris, corner_peaks
 from skimage.transform import warp, AffineTransform, resize
 
 
-def main(image_path=r"C:\Users\russe\Downloads\testcube.png", dimensions=(3, 4)):
+def main(image_path: str , dimensions: tuple = (11, 8.5)) -> np.ndarray:
+    """
+    This function takes in an image path and dimensions of a grid and returns a processed image.
+    """
+    
     # def main(image_path="easySudoku.png"):
 
     dimensions=(3,4)
@@ -208,4 +212,3 @@ def main(image_path=r"C:\Users\russe\Downloads\testcube.png", dimensions=(3, 4))
     # return ready_image
 
     return color_ready_image
-main()
