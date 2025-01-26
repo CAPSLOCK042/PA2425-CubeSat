@@ -26,6 +26,6 @@ def returnImages() -> list[str]:
     
 a=returnImages()
 b=[c for c in a if "image_" in c]
-c=main(b[-2], (11,8.5))
+c=main(b[-3], (11,8.5))
 
 show_image(c)
