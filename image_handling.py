@@ -32,6 +32,8 @@ a=returnImages()
 
 image_path1=r"C:\Users\russe\Downloads\spain_before.webp"
 image_path2=r"C:\Users\russe\Downloads\spain_after.webp"
+image_path2=r"C:\Users\russe\Downloads\bangladesh_tmo_2014241_lrg.jpg"
+image_path1=r"C:\Users\russe\Downloads\bangladesh_tmo_2012252_lrg.jpg"
 
 color1 = cv2.cvtColor(cv2.imread(image_path1), cv2.COLOR_BGR2RGB)
 color2 = cv2.cvtColor(cv2.imread(image_path2), cv2.COLOR_BGR2RGB)
@@ -40,12 +42,13 @@ color2 = cv2.cvtColor(cv2.imread(image_path2), cv2.COLOR_BGR2RGB)
 image_path1=REPO_PATH+"/images/buttontest_182819.jpg"
 image_path2=REPO_PATH+"/images/buttontest_183103.jpg"
 
-color1=main(image_path1)
-color2=main(image_path2)
+#color1=main(image_path1)
+#color2=main(image_path2)
 
 show_image(color1)
 show_image(color2)
-a=img_diff.main(color1, color2)
+strength=[1,1,-2]
+a=img_diff.main(color1, color2,strength)
 show_image(a)
 """
 images/buttontest_182819.jpg
